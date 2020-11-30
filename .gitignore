@@ -49,7 +49,6 @@ venv.bak/
 
 # R
 .Rhistory
-*.csv
 *.pdf
 
 # Visualisation
