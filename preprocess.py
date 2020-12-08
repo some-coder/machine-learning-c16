@@ -48,6 +48,10 @@ class RecordSet:
 		"""
 		Separates this set of records into two subsets.
 
+		If no random number generator is supplied, the first N rows are used
+		for the first subset, where N is greatest integer smaller than or
+		equal to the percentage of the total number of rows.
+
 		:param percent: The percentage of rows to assign to the first subset.
 		:param rng: If supplied: the RNG for selecting rows for the first subset.
 		:return: A partitioning of this record set into two subsets.
@@ -133,7 +137,7 @@ def apply_pca(r: RecordSet, dim: Optional[int]) -> PCA:
 		dim = pca.explained_variance_.shape[0]
 	r.entries = np.concatenate((pca.transform(inp), out), axis=1)
 	r.names = ['component_' + str(i + 1) for i in range(dim)] + [r.names[len(r.names) - 1]]
-	r.types = [np.dtype('float64') for i in range(dim)] + [r.types[len(r.types) - 1]]
+	r.types = [np.dtype('float64') for _ in range(dim)] + [r.types[len(r.types) - 1]]
 	return pca
 
 
@@ -164,5 +168,5 @@ if __name__ == '__main__':
 	gen: rd.Random = rd.Random(123)  # for reproducibility
 	tv, te = rec.partition(0.7, gen)  # two datasets, namely train-validate and test
 	tv.normalise()
-	pca = apply_pca(tv, None)
-	visualise_pca_components(pca, block=True)
+	tv_pca = apply_pca(tv, None)
+	visualise_pca_components(tv_pca, block=True)
