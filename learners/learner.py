@@ -7,9 +7,11 @@ class Learner:
 	Establishes a base class from which learning algorithms can extend.
 	"""
 
-	def __init__(self) -> None:
+	def __init__(self, **params: any) -> None:
 		"""
 		Constructs a base learning algorithm.
+
+		:param params: Parameter values to supply.
 		"""
 		pass
 
