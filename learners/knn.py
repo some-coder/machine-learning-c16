@@ -9,11 +9,25 @@ from typing import Optional
 class KNN(Learner):
 
 	def __init__(self, k: int, **params: any):
+		"""
+		Initialises the K-Nearest Neighbours learning algorithm.
+
+		:param k: The number of neighbours to compare with. Best set uneven.
+		:param params: Ignored.
+		"""
 		super().__init__(**params)
 		self.k = k
 		self.data: Optional[RecordSet] = None
 
 	def fit(self, rs: RecordSet) -> None:
+		"""
+		'Fits' the KNN to the provided dataset.
+
+		In reality, the KNN does not really fit to the data, but simply stores
+		the training observations for reference during prediction.
+
+		:param rs: The record set to fit with.
+		"""
 		self.data = cp.deepcopy(rs)
 
 	def point_prediction(self, point: np.ndarray) -> np.ndarray:
@@ -34,6 +48,12 @@ class KNN(Learner):
 		return st.mode(first_k)[0]  # choose most-occurring neighbor type
 
 	def predict(self, rs: RecordSet) -> np.ndarray:
+		"""
+		Assigns a predicted class label to the given record sets.
+
+		:param rs: The record set to assign predictions to.
+		:return: A column vector of predictions corresponding to the record set's rows.
+		"""
 		predictions: np.ndarray = np.zeros((rs.entries.shape[0], 1))
 		for r in range(rs.entries.shape[0]):
 			point: np.ndarray = rs.entries[[r], :-1]  # do not include the ground truths
