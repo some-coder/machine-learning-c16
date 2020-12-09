@@ -27,6 +27,12 @@ class Learner:
 		"""
 		Makes the base learner predict validation or testing data.
 
+		Two notes need to be made. First, the last column of the provided record set
+		contains the ground truth information. These entries, of course, may not be
+		used during prediction. Second, the output Numpy array needs to be a column
+		vector of two-dimensions: the first (rows) is equal to the length of the number
+		of records, and the second (columns) is equal to one.
+
 		:param rs: The record set to provide as validation or testing data.
 		:return: The predictions. A column vector with as many rows as the record set has.
 		"""

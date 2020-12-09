@@ -18,7 +18,7 @@ InExRange = Tuple[int, int]
 
 def dict_from_tuple_of_tuples(tot: Tuple[Tuple[str, any], ...]) -> Dict[str, any]:
 	"""
-	Obtains a string-any dictionary from a tuple-of-tuples (TOT).
+	Obtains a string-to-any dictionary from a tuple-of-tuples (TOT).
 
 	:param tot: The TOT.
 	:return: The dictionary derived from the TOT.
@@ -34,7 +34,7 @@ def dict_from_tuple_of_tuples(tot: Tuple[Tuple[str, any], ...]) -> Dict[str, any
 class Optimiser:
 	"""
 	Optimisers, using K-fold cross-validation, attempt to find
-	risk-minimising configurations of learning algorithms by
+	risk-minimising configurations of learning algorithms by a
 	search through a pre-defined parameter grid.
 	"""
 
@@ -43,10 +43,10 @@ class Optimiser:
 		Constructs an optimiser.
 
 		:param rs: The train-validation subset of the complete, pre-processed dataset.
-		:param lrn: A learning algorithm class (not an instance of it).
+		:param lrn: A learning algorithm class. (Not an instance. Must be a subclass of Learner.)
 		:param grd: A parameter grid to search over.
 		:param k: The number of folds to use.
-		:param losses: Loss functions to use. Must be minimally one.
+		:param losses: Loss functions to use. At least one must be given.
 		"""
 		self.all_data = rs
 		self.all_configs = self.configs_from_grid(grd)
@@ -88,8 +88,7 @@ class Optimiser:
 		:return: A sequence of in- and exclusion index ranges.
 		"""
 		f: List[InExRange] = []
-		indices: List[int] = list(np.floor(np.arange(0, self.n, self.n / self.k)).astype(int))
-		indices += [self.n - 1]
+		indices: List[int] = list(np.floor(np.linspace(0, self.n, self.k)).astype(int))
 		for i in range(len(indices) - 1):
 			f.append((indices[i], indices[i + 1]))
 		return tuple(f)
@@ -110,7 +109,7 @@ class Optimiser:
 		out: np.ndarray = np.zeros((len(self.losses), 1))
 		for i in range(len(self.losses)):
 			loss: Loss = self.losses[i]
-			out[i] = loss.compute(prd, validate[:, -1])
+			out[i] = loss.compute(prd, validate[:, -1].reshape((self.n, 1)))
 		return out
 
 	def evaluate_all(self) -> None:
@@ -123,10 +122,10 @@ class Optimiser:
 		"""
 		train: RecordSet = cp.deepcopy(self.all_data)
 		validate: RecordSet = cp.deepcopy(self.all_data)
-		for i in range(len(self.folds)):
+		for fold in self.folds:
 			# compute the train and validation sets for this fold
-			start: int = self.folds[i][0]
-			end: int = self.folds[i][1]
+			start: int = fold[0]
+			end: int = fold[1]
 			train_ids: List[int] = list(range(start)) + list(range(end, self.n))
 			validate_ids: List[int] = list(range(start, end))
 			train.entries = self.all_data.entries[train_ids, :]
@@ -134,6 +133,6 @@ class Optimiser:
 			# go over the configurations in the grid, and evaluate
 			for c in range(len(self.all_configs)):
 				config: Config = self.all_configs[c]
-				self.evs[:, c] += self.evaluate(train, validate, config)
+				self.evs[:, [c]] += self.evaluate(train, validate, config)
 		# take, per loss metric, the average over folds
 		self.evs /= self.k * np.ones((len(self.losses), 1))
