@@ -9,7 +9,17 @@ learning methods.
 
 ## Ensure You can Run this Project
 
-This project requires Python 3 or later.
+This project requires Python 3 or later. Python 2 will _not_ work!
+
+The following Python 3 packages need to be installed. Versions slightly newer
+or older may work as well.
+
+| Package | Version |
+| --: | --: |
+| `matplotlib` | 3.3.2 |
+| `numpy` | 1.19.1 |
+| `pandas` | 1.1.0 |
+| `scikit-learn` | 0.23.2 |
 
 ## Obtain the Dataset 
 

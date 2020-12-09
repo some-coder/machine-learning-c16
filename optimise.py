@@ -1,10 +1,10 @@
 import copy as cp
 import itertools as it
 import numpy as np
-from typing import Dict, List, Tuple, Type, cast  # remove last one
+from typing import Dict, List, Tuple, Type, cast
 from learners.learner import Learner
 from losses.loss import Loss
-from preprocess import RecordSet, raw_data, apply_pca  # remove last two
+from preprocess import RecordSet, raw_data, apply_pca
 
 import random as rd
 from learners.knn import KNN
