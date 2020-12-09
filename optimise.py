@@ -1,10 +1,14 @@
 import copy as cp
 import itertools as it
 import numpy as np
-from typing import Dict, List, Tuple, Type
+from typing import Dict, List, Tuple, Type, cast  # remove last one
 from learners.learner import Learner
 from losses.loss import Loss
-from preprocess import RecordSet
+from preprocess import RecordSet, raw_data, apply_pca  # remove last two
+
+import random as rd
+from learners.knn import KNN
+from losses.count import CountLoss
 
 
 Parameter = str
@@ -49,16 +53,17 @@ class Optimiser:
 		:param losses: Loss functions to use. At least one must be given.
 		"""
 		self.all_data = rs
-		self.all_configs = self.configs_from_grid(grd)
-		self.n = self.all_data.entries.shape[0]
-		self.folds = self.folds_from_data()
 		self.lrn = lrn
 		self.k = k
 		self.losses = losses
-		self.evs: np.ndarray = np.zeros(len(self.losses), len(self.all_configs))
+		self.n = self.all_data.entries.shape[0]
+		self.all_config_values = self.configs_from_grid(grd)
+		self.grid_parameters: List[Parameter] = [grd[i][0] for i in range(len(grd))]
+		self.evs: np.ndarray = np.zeros((len(self.losses), len(self.all_config_values)))
+		self.folds = self.folds_from_data()
 
 	@staticmethod
-	def configs_from_grid(grd: Grid) -> List[Config]:
+	def configs_from_grid(grd: Grid) -> List[Tuple[any, ...]]:
 		"""
 		'Unfolds' a parameter grid into a sequence of single parameter configurations.
 
@@ -70,7 +75,7 @@ class Optimiser:
 		Parameter names themselves are not included in the unfurled grid.
 
 		:param grd: The parameter grid to unfurl.
-		:return: The unfurled parameter grid.
+		:return: The unfurled parameter grid, without parameter keys.
 		"""
 		axes_values: Tuple[Values] = tuple([ga[1] for ga in grd])
 		return list(it.product(*axes_values))
@@ -88,7 +93,7 @@ class Optimiser:
 		:return: A sequence of in- and exclusion index ranges.
 		"""
 		f: List[InExRange] = []
-		indices: List[int] = list(np.floor(np.linspace(0, self.n, self.k)).astype(int))
+		indices: List[int] = list(np.floor(np.linspace(0, self.n, self.k + 1)).astype(int))
 		for i in range(len(indices) - 1):
 			f.append((indices[i], indices[i + 1]))
 		return tuple(f)
@@ -109,7 +114,7 @@ class Optimiser:
 		out: np.ndarray = np.zeros((len(self.losses), 1))
 		for i in range(len(self.losses)):
 			loss: Loss = self.losses[i]
-			out[i] = loss.compute(prd, validate[:, -1].reshape((self.n, 1)))
+			out[i] = loss.compute(prd, validate.entries[:, [-1]])
 		return out
 
 	def evaluate_all(self) -> None:
@@ -124,6 +129,7 @@ class Optimiser:
 		validate: RecordSet = cp.deepcopy(self.all_data)
 		for fold in self.folds:
 			# compute the train and validation sets for this fold
+			print('Performing fold ' + fold.__str__())
 			start: int = fold[0]
 			end: int = fold[1]
 			train_ids: List[int] = list(range(start)) + list(range(end, self.n))
@@ -131,8 +137,56 @@ class Optimiser:
 			train.entries = self.all_data.entries[train_ids, :]
 			validate.entries = self.all_data.entries[validate_ids, :]
 			# go over the configurations in the grid, and evaluate
-			for c in range(len(self.all_configs)):
-				config: Config = self.all_configs[c]
+			for c in range(len(self.all_config_values)):
+				config_values: Tuple[any, ...] = self.all_config_values[c]
+				config: Config = tuple([(self.grid_parameters[i], config_values[i]) for i in range(len(config_values))])
+				print('\tConfiguration: ' + config.__str__())
 				self.evs[:, [c]] += self.evaluate(train, validate, config)
 		# take, per loss metric, the average over folds
 		self.evs /= self.k * np.ones((len(self.losses), 1))
+
+	def best_configurations(self, loss_index: int, n: int) -> Tuple[Config]:
+		"""
+		Yields a top-N of configurations, based on a loss given by its index.
+
+		Note that N must be at least one, and may be maximally equal to the number of
+		configurations.
+
+		:param loss_index: The index of the loss method to find best configurations for.
+		:param n: The top-N of configurations to get.
+		:return: A tuple of the top-N best configurations, sorted in descending order.
+		"""
+		with_ids: np.ndarray = np.concatenate((np.array([range(self.evs.shape[1])]), self.evs), axis=0)
+		ordered: np.ndarray = with_ids[:, self.evs[loss_index, :].argsort()]
+		best_n: List[int] = list(ordered[0, :n].astype('int'))
+		best_configs: List[Config] = []
+		for i in best_n:
+			good_config_values: Tuple[any, ...] = self.all_config_values[i]
+			good_config: Config = \
+				tuple([(self.grid_parameters[i], good_config_values[i]) for i in range(len(good_config_values))])
+			best_configs.append(good_config)
+		return tuple(best_configs)
+
+
+if __name__ == '__main__':
+	# prepare the data
+	rec: RecordSet = raw_data('data.csv')
+	gen: rd.Random = rd.Random(123)  # for reproducibility
+	tv, te = rec.partition(0.7, gen)  # two datasets, namely train-validate and test
+	tv.normalise()
+	tv_pca = apply_pca(tv, 2)  # keep the two most variance-accounting-for components
+
+	# set up the optimiser
+	g: Grid = cast(Grid, (('k', (1, 2, 3)),))
+	ls: Tuple[Loss] = (CountLoss(),)
+	opt: Optimiser = Optimiser(rs=tv, lrn=KNN, grd=g, k=3, losses=ls)
+
+	# evaluate and show results
+	print('Commencing the optimiser:')
+	opt.evaluate_all()
+	print('Evaluations of configurations, averaged over folds, per loss metric:')
+	print(opt.evs)
+	bests: Tuple[Config] = opt.best_configurations(0, 2)
+	print('Top %d best configurations:' % len(bests))
+	for b in range(len(bests)):
+		print('\t%d. %s' % (b + 1, bests[b].__str__()))
