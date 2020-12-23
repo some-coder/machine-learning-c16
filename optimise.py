@@ -201,7 +201,7 @@ if __name__ == '__main__':
 			g: Grid = cast(Grid, (('alpha', (0, 0.009, 0.01)),))
 		elif model == "Logistic_Reggression":
 			current_model = Logistic_Reggression
-			g: Grid = cast(Grid, (('C', (10, 5, 1)),))
+			g: Grid = cast(Grid, (('alpha', (0.1, 3.5, 5)),))
 		elif model == "Probit_Reggression":
 			current_model = Probit_Reggression
 			g: Grid = cast(Grid, (('alpha', (0.1, 3.5, 5)),))

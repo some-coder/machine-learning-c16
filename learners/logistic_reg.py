@@ -9,15 +9,15 @@ from typing import Optional
 
 
 class Logistic_Reggression(Learner):
-    def __init__(self, C: float, **params: any):
+    def __init__(self, alpha: float, **params: any):
         """
         Initialises the Logistic regression algorithm.
 
-		:param C: regularization term C.
+		:param alpha: regularization term alpha.
 		:param params: Ignored.
         """
         super().__init__(**params)
-        self.C = C
+        self.alpha = alpha
         self.gamma = 0.5
         self.binary_points = True
 
@@ -37,11 +37,11 @@ class Logistic_Reggression(Learner):
         Y = self.data.entries[:, -1:]
 
         # avoid error
-        if self.C < 1:
-            raise Exception("C too low to obtain reliable results")
+        if self.alpha == 0:
+            raise Exception("Alpha too low to obtain reliable results")
 
         # import the logistic regression
-        self.model = LogisticRegression(C=self.C, penalty="l1", solver="liblinear")
+        self.model = LogisticRegression(C=1/self.alpha, penalty="l1", solver="liblinear")
         self.model.fit(X=X, y=Y.ravel())
         return
 
