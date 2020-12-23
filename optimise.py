@@ -2,13 +2,18 @@ import copy as cp
 import itertools as it
 import numpy as np
 from typing import Dict, List, Tuple, Type, cast
+
 from learners.learner import Learner
 from losses.loss import Loss
 from preprocess import RecordSet, raw_data, apply_pca
 
 import random as rd
 from learners.knn import KNN
+from learners.linear_reg import Linear_Reggression
+from learners.logistic_reg import Logistic_Reggression
+from learners.probit_reg import Probit_Reggression
 from losses.count import CountLoss
+
 
 
 Parameter = str
@@ -177,16 +182,49 @@ if __name__ == '__main__':
 	tv_pca = apply_pca(tv, 2)  # keep the two most variance-accounting-for components
 
 	# set up the optimiser
-	g: Grid = cast(Grid, (('k', (1, 2, 3)),))
-	ls: Tuple[Loss] = (CountLoss(),)
-	opt: Optimiser = Optimiser(rs=tv, lrn=KNN, grd=g, k=3, losses=ls)
+	#g: Grid = cast(Grid, (('k', (1, 2, 3)),))
+	#g: Grid = cast(Grid, (('alpha', (0, 1)),))
 
-	# evaluate and show results
-	print('Commencing the optimiser:')
-	opt.evaluate_all()
-	print('Evaluations of configurations, averaged over folds, per loss metric:')
-	print(opt.evs)
-	bests: Tuple[Config] = opt.best_configurations(0, 2)
-	print('Top %d best configurations:' % len(bests))
-	for b in range(len(bests)):
-		print('\t%d. %s' % (b + 1, bests[b].__str__()))
+	#ls: Tuple[Loss] = (CountLoss(),)
+	#opt: Optimiser = Optimiser(rs=tv, lrn=KNN, grd=g, k=3, losses=ls)
+	#opt: Optimiser = Optimiser(rs=tv, lrn=Linear_Reggression, grd=g, k=3, losses=ls)
+	#opt: Optimiser = Optimiser(rs=tv, lrn=Logistic_Reggression, grd=g, k=3, losses=ls)
+	#opt: Optimiser = Optimiser(rs=tv, lrn=Probit_Reggression, grd=g, k=3, losses=ls)
+
+	# print each model
+	model_list = ["Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN"]
+	for model in model_list:
+		print("\n", "*-"*40)
+
+		if model == "Linear_Reggression":
+			current_model = Linear_Reggression
+			g: Grid = cast(Grid, (('alpha', (0, 0.009, 0.01)),))
+		elif model == "Logistic_Reggression":
+			current_model = Logistic_Reggression
+			g: Grid = cast(Grid, (('C', (10, 5, 1)),))
+		elif model == "Probit_Reggression":
+			current_model = Probit_Reggression
+			g: Grid = cast(Grid, (('alpha', (0.1, 3.5, 5)),))
+		elif model == "KNN":
+			current_model = KNN
+			g: Grid = cast(Grid, (('k', (1, 2, 3)),))
+		else:
+			raise NotImplemented
+
+		# set params
+		ls: Tuple[Loss] = (CountLoss(),)
+
+		# select model
+		print(f"current model {model}")
+		opt: Optimiser = Optimiser(rs=tv, lrn=current_model, grd=g, k=3, losses=ls)
+
+		# evaluate and show results
+		print('Commencing the optimiser:')
+		opt.evaluate_all()
+		print('Evaluations of configurations, averaged over folds, per loss metric:')
+		print(opt.evs)
+		bests: Tuple[Config] = opt.best_configurations(0, 2)
+		print('Top %d best configurations:' % len(bests))
+		for b in range(len(bests)):
+			print('\t%d. %s' % (b + 1, bests[b].__str__()))
+
