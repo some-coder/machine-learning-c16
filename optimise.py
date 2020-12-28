@@ -9,6 +9,7 @@ from preprocess import RecordSet, raw_data, apply_pca
 
 import random as rd
 from learners.knn import KNN
+from learners.svm import SVM
 from learners.linear_reg import Linear_Reggression
 from learners.logistic_reg import Logistic_Reggression
 from learners.probit_reg import Probit_Reggression
@@ -192,11 +193,14 @@ if __name__ == '__main__':
 	#opt: Optimiser = Optimiser(rs=tv, lrn=Probit_Reggression, grd=g, k=3, losses=ls)
 
 	# print each model
-	model_list = ["Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN"]
+	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN"]
 	for model in model_list:
 		print("\n", "*-"*40)
 
-		if model == "Linear_Reggression":
+		if model == "SVM":
+			current_model = SVM
+			g: Grid = cast(Grid, (('C', (0.1, 0.5, 0.9, 1.0)),))
+		elif model == "Linear_Reggression":
 			current_model = Linear_Reggression
 			g: Grid = cast(Grid, (('alpha', (0, 0.009, 0.01)),))
 		elif model == "Logistic_Reggression":
