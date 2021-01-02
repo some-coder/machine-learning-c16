@@ -8,6 +8,7 @@ from losses.loss import Loss
 from preprocess import RecordSet, raw_data, apply_pca
 
 import random as rd
+from learners.k_means_clustering import KMeansClustering
 from learners.knn import KNN
 from learners.svm import SVM
 from learners.linear_reg import Linear_Reggression
@@ -193,7 +194,7 @@ if __name__ == '__main__':
 	#opt: Optimiser = Optimiser(rs=tv, lrn=Probit_Reggression, grd=g, k=3, losses=ls)
 
 	# print each model
-	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN"]
+	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN", "KMeansClustering"]
 	for model in model_list:
 		print("\n", "*-"*40)
 
@@ -212,6 +213,9 @@ if __name__ == '__main__':
 		elif model == "KNN":
 			current_model = KNN
 			g: Grid = cast(Grid, (('k', (1, 2, 3)),))
+		elif model =="KMeansClustering":
+			current_model = KMeansClustering
+			g: Grid = cast(Grid, (('k', (1, 2, 3, 4)), ))
 		else:
 			raise NotImplemented
 
