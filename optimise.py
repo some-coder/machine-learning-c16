@@ -14,6 +14,9 @@ from learners.svm import SVM
 from learners.linear_reg import Linear_Reggression
 from learners.logistic_reg import Logistic_Reggression
 from learners.probit_reg import Probit_Reggression
+from learners.decision_tree import DecisionTree
+from learners.random_forest import RandomForest
+
 from losses.count import CountLoss
 
 
@@ -194,7 +197,7 @@ if __name__ == '__main__':
 	#opt: Optimiser = Optimiser(rs=tv, lrn=Probit_Reggression, grd=g, k=3, losses=ls)
 
 	# print each model
-	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN", "KMeansClustering"]
+	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN", "KMeansClustering", "RandomForest"]
 	for model in model_list:
 		print("\n", "*-"*40)
 
@@ -213,9 +216,12 @@ if __name__ == '__main__':
 		elif model == "KNN":
 			current_model = KNN
 			g: Grid = cast(Grid, (('k', (1, 2, 3)),))
-		elif model =="KMeansClustering":
+		elif model == "KMeansClustering":
 			current_model = KMeansClustering
 			g: Grid = cast(Grid, (('k', (1, 2, 3, 4)), ))
+		elif model == "RandomForest":
+			current_model = RandomForest
+			g: Grid = cast(Grid, (('depth', (2, 5, 3, 10)), ))	# number of trees in the forest = 100
 		else:
 			raise NotImplemented
 
