@@ -23,6 +23,7 @@ optional.
 | `pandas` | 1.1.0 |
 | `scikit-learn` | 0.23.2 |
 | `statsmodels` | 0.12.1 |
+| `graphviz` | 0.16 |
 
 ## Obtain the Dataset 
 
