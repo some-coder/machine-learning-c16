@@ -16,6 +16,7 @@ from learners.logistic_reg import Logistic_Reggression
 from learners.probit_reg import Probit_Reggression
 from learners.decision_tree import DecisionTree
 from learners.random_forest import RandomForest
+from learners.naive_bayes import NaiveBayes
 
 from losses.count import CountLoss
 
@@ -197,7 +198,8 @@ if __name__ == '__main__':
 	#opt: Optimiser = Optimiser(rs=tv, lrn=Probit_Reggression, grd=g, k=3, losses=ls)
 
 	# print each model
-	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN", "KMeansClustering", "RandomForest"]
+	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN", "KMeansClustering", "RandomForest", "Naive_Bayes"]
+
 	for model in model_list:
 		print("\n", "*-"*40)
 
@@ -219,9 +221,12 @@ if __name__ == '__main__':
 		elif model == "KMeansClustering":
 			current_model = KMeansClustering
 			g: Grid = cast(Grid, (('k', (1, 2, 3, 4)), ))
+		elif model == "Naive_Bayes":
+			current_model = NaiveBayes
+			g: Grid = cast(Grid, ())
 		elif model == "RandomForest":
 			current_model = RandomForest
-			g: Grid = cast(Grid, (('depth', (2, 5, 3, 10)), ))	# number of trees in the forest = 100
+			g: Grid = cast(Grid, (('depth', (2, 5, 3)), ))	# number of trees in the forest = 100
 		else:
 			raise NotImplemented
 
