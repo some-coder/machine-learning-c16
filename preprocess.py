@@ -159,6 +159,29 @@ def apply_pca(r: RecordSet, dim: Optional[int]) -> PCA:
 	return pca
 
 
+def apply_pca_indirectly(r: RecordSet, pca: PCA) -> None:
+	"""
+	Performs linear PCA on a record set.
+
+	In contrast to the direct PCA application method, defined above, this method
+	allows you to apply PCA indirectly, using results from a previous PC analysis
+	of another dataset. This is primarily useful when you have test data, that
+	needs to be transformed similarly as previous training/validation data.
+
+	This method does not return a PCA on its own; it simply 'piggy-backs' from
+	a 'true' PCA, often performed on training data beforehand.
+
+	Important. This method silently assumes that the RecordSet has been normalised
+	(both in terms of centering, as well as scaling) in exactly the same way as
+	was done for the dataset that yielded the PCA (`pca`) that is now used.
+
+	:param r: The record set to subject to a PC analysis.
+	:param pca: A Scikit-Learn PCA object of which to use the principal components matrix, U.
+	"""
+	new_patterns: np.ndarray = (pca.components_ @ r.entries[:, :-1].T).T  # excludes the output column
+	r.entries = np.concatenate((new_patterns, r.entries[:, [-1]]), axis=1)  # include it
+
+
 def visualise_pca_components(pca: PCA, block: bool = True) -> None:
 	"""
 	Visualises the Variance Accounted For (VAF) per component of a PC analysis.
@@ -188,5 +211,7 @@ if __name__ == '__main__':
 	tv_mu: np.ndarray = tv.entries.mean(axis=0).reshape((1, tv.entries.shape[1]))
 	tv_std: np.ndarray = tv.entries.std(axis=0).reshape((1, tv.entries.shape[1]))
 	tv.normalise(tv_mu, tv_std, True)
-	tv_pca = apply_pca(tv, None)
+	tv_pca = apply_pca(tv, None)  # Choose None to include all PCs. (Is not the same as not doing the PCA.)
+	te.normalise(tv_mu, tv_std, True)
+	apply_pca_indirectly(te, tv_pca)
 	visualise_pca_components(tv_pca, block=True)
