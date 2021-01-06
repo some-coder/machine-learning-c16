@@ -1,7 +1,7 @@
 import copy as cp
 import itertools as it
 import numpy as np
-from typing import Dict, List, Tuple, Type, cast
+from typing import Dict, List, Optional, Tuple, Type, cast
 
 from learners.learner import Learner
 from losses.loss import Loss
@@ -154,7 +154,7 @@ class Optimiser:
 		# take, per loss metric, the average over folds
 		self.evs /= self.k * np.ones((len(self.losses), 1))
 
-	def best_configurations(self, loss_index: int, n: int) -> Tuple[Config]:
+	def best_configurations(self, loss_index: int, n: Optional[int] = None) -> Tuple[Config]:
 		"""
 		Yields a top-N of configurations, based on a loss given by its index.
 
@@ -162,12 +162,12 @@ class Optimiser:
 		configurations.
 
 		:param loss_index: The index of the loss method to find best configurations for.
-		:param n: The top-N of configurations to get.
+		:param n: Optional. The top-N of configurations to get; the rest is ignored.
 		:return: A tuple of the top-N best configurations, sorted in descending order.
 		"""
 		with_ids: np.ndarray = np.concatenate((np.array([range(self.evs.shape[1])]), self.evs), axis=0)
 		ordered: np.ndarray = with_ids[:, self.evs[loss_index, :].argsort()]
-		best_n: List[int] = list(ordered[0, :n].astype('int'))
+		best_n: List[int] = list(ordered[0, :(n if n is not None else ordered.shape[1])].astype('int'))
 		best_configs: List[Config] = []
 		for i in best_n:
 			good_config_values: Tuple[any, ...] = self.all_config_values[i]
@@ -238,7 +238,7 @@ if __name__ == '__main__':
 		opt.evaluate_all()
 		print('Evaluations of configurations, averaged over folds, per loss metric:')
 		print(opt.evs)
-		bests: Tuple[Config] = opt.best_configurations(0, 2)
+		bests: Tuple[Config] = opt.best_configurations(0)
 		print('Top %d best configurations:' % len(bests))
 		for b in range(len(bests)):
 			print('\t%d. %s' % (b + 1, bests[b].__str__()))
