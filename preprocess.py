@@ -66,15 +66,20 @@ class RecordSet:
 		rb.entries = rb.entries[indices[split:], :]
 		return ra, rb
 
-	def center(self, pre_calc_mu: Optional[np.ndarray] = None, also_categorical: bool = False) -> None:
+	def center(
+			self,
+			pre_calc_mu: Optional[np.ndarray] = None,
+			also_categorical: bool = False,
+			also_output: bool = True) -> None:
 		"""
 		Centers columns around their (sample) mean value.
 
 		:param pre_calc_mu: Optional. A row vector of per-column means. If supplied, it will be used in computation.
-		:param also_categorical: Whether to also center categorical columns.
+		:param also_categorical: Whether to also center categorical columns. Defaults to no.
+		:param also_output: Whether to also center the output column. Defaults to yes.
 		"""
 		idx: int = 0
-		for col in range(self.entries.shape[1]):
+		for col in range(self.entries.shape[1] - (0 if also_output else 1)):
 			if self.types[col] == np.dtype('bool') and not also_categorical:
 				continue
 			if pre_calc_mu is not None:
@@ -83,15 +88,19 @@ class RecordSet:
 				self.entries[:, col] -= self.entries[:, col].mean()
 			idx += 1
 
-	def scale(self, pre_calc_std: Optional[np.ndarray] = None, also_categorical: bool = False) -> None:
+	def scale(self,
+			pre_calc_std: Optional[np.ndarray] = None,
+			also_categorical: bool = False,
+			also_output: bool = True) -> None:
 		"""
 		Scales columns to have unit variance.
 
 		:param pre_calc_std: Optional. A row vector of per-column SDs. If supplied, it will be used in computation.
 		:param also_categorical: Whether to also scale categorical columns.
+		:param also_output: Whether to also scale the output column. Defaults to yes.
 		"""
 		idx: int = 0
-		for col in range(self.entries.shape[1]):
+		for col in range(self.entries.shape[1] - (0 if also_output else 1)):
 			if self.types[col] == np.dtype('bool') and not also_categorical:
 				continue
 			if pre_calc_std is not None:
@@ -104,16 +113,18 @@ class RecordSet:
 			self,
 			pre_calc_mu: Optional[np.ndarray] = None,
 			pre_calc_std: Optional[np.ndarray] = None,
-			also_categorical: bool = False) -> None:
+			also_categorical: bool = False,
+			also_output: bool = True) -> None:
 		"""
 		Centers and scales columns.
 
 		:param pre_calc_mu: Optional. A row vector of per-column means. If supplied, it will be used in computation.
 		:param pre_calc_std: Optional. A row vector of per-column SDs. If supplied, it will be used in computation.
 		:param also_categorical: Whether to also normalise categorical columns.
+		:param also_output: Whether to also normalise the output column. Defaults to yes.
 		"""
-		self.center(pre_calc_mu, also_categorical)
-		self.scale(pre_calc_std, also_categorical)
+		self.center(pre_calc_mu, also_categorical, also_output)
+		self.scale(pre_calc_std, also_categorical, also_output)
 
 
 def raw_data(location: str) -> RecordSet:
@@ -210,7 +221,9 @@ if __name__ == '__main__':
 	tv, te = rec.partition(0.7, gen)  # two datasets, namely train-validate and test
 	tv_mu: np.ndarray = tv.entries.mean(axis=0).reshape((1, tv.entries.shape[1]))
 	tv_std: np.ndarray = tv.entries.std(axis=0).reshape((1, tv.entries.shape[1]))
+	print(tv.entries[:, [-1]])
 	tv.normalise(tv_mu, tv_std, True)
+	print(tv.entries[:, [-1]])
 	tv_pca = apply_pca(tv, None)  # Choose None to include all PCs. (Is not the same as not doing the PCA.)
 	te.normalise(tv_mu, tv_std, True)
 	apply_pca_indirectly(te, tv_pca)

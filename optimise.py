@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Type, cast
 
 from learners.learner import Learner
 from losses.loss import Loss
-from preprocess import RecordSet, raw_data, apply_pca
+from preprocess import RecordSet, raw_data, apply_pca, apply_pca_indirectly
 
 import random as rd
 from learners.k_means_clustering import KMeansClustering
@@ -19,7 +19,6 @@ from learners.random_forest import RandomForest
 from learners.naive_bayes import NaiveBayes
 
 from losses.count import CountLoss
-
 
 
 Parameter = str
@@ -184,18 +183,12 @@ if __name__ == '__main__':
 	rec: RecordSet = raw_data('data.csv')
 	gen: rd.Random = rd.Random(123)  # for reproducibility
 	tv, te = rec.partition(0.7, gen)  # two datasets, namely train-validate and test
-	tv.normalise()
+	tv_mu = tv.entries.mean(axis=0).reshape((1, tv.entries.shape[1]))
+	tv_std = tv.entries.std(axis=0).reshape((1, tv.entries.shape[1]))
+	tv.normalise(tv_mu, tv_std, True)
 	tv_pca = apply_pca(tv, 2)  # keep the two most variance-accounting-for components
-
-	# set up the optimiser
-	#g: Grid = cast(Grid, (('k', (1, 2, 3)),))
-	#g: Grid = cast(Grid, (('alpha', (0, 1)),))
-
-	#ls: Tuple[Loss] = (CountLoss(),)
-	#opt: Optimiser = Optimiser(rs=tv, lrn=KNN, grd=g, k=3, losses=ls)
-	#opt: Optimiser = Optimiser(rs=tv, lrn=Linear_Reggression, grd=g, k=3, losses=ls)
-	#opt: Optimiser = Optimiser(rs=tv, lrn=Logistic_Reggression, grd=g, k=3, losses=ls)
-	#opt: Optimiser = Optimiser(rs=tv, lrn=Probit_Reggression, grd=g, k=3, losses=ls)
+	te.normalise(tv_mu, tv_std)
+	apply_pca_indirectly(te, tv_pca)
 
 	# print each model
 	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN", "KMeansClustering", "RandomForest", "Naive_Bayes"]
