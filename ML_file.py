@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import preprocessing
 
 
-#import models
+#import model_grids
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
@@ -108,7 +108,7 @@ naive_bayes = GaussianNB()
 # import the logsitic regression
 log_reg = LogisticRegression(random_state=pseudo_random_number)
 
-# train the models using the training set
+# train the model_grids using the training set
 svm_linear.fit(x_train, y_train)
 svm_poly.fit(x_train, y_train)
 svm_rbf.fit(x_train, y_train)

@@ -126,19 +126,22 @@ class Optimiser:
 			out[i] = loss.compute(prd, validate.entries[:, [-1]])
 		return out
 
-	def evaluate_all(self) -> None:
+	def evaluate_all(self, show: bool = False) -> None:
 		"""
 		Evaluates the model on all configurations, over K folds.
 
 		Loss metrics are noted per configuration, and averaged over
 		folds. The resultant #losses-by-#configurations matrix is
 		stored in the class, ready to be requested by other objects.
+
+		:param show: Whether to show evaluation happening at standard output.
 		"""
 		train: RecordSet = cp.deepcopy(self.all_data)
 		validate: RecordSet = cp.deepcopy(self.all_data)
 		for fold in self.folds:
 			# compute the train and validation sets for this fold
-			print('Performing fold ' + fold.__str__())
+			if show:
+				print('Computing fold ' + fold.__str__() + '.')
 			start: int = fold[0]
 			end: int = fold[1]
 			train_ids: List[int] = list(range(start)) + list(range(end, self.n))
@@ -149,7 +152,8 @@ class Optimiser:
 			for c in range(len(self.all_config_values)):
 				config_values: Tuple[any, ...] = self.all_config_values[c]
 				config: Config = tuple([(self.grid_parameters[i], config_values[i]) for i in range(len(config_values))])
-				print('\tConfiguration: ' + config.__str__())
+				if show:
+					print('\tConfiguration ' + str(config) + '.')
 				self.evs[:, [c]] += self.evaluate(train, validate, config)
 		# take, per loss metric, the average over folds
 		self.evs /= self.k * np.ones((len(self.losses), 1))

@@ -81,7 +81,6 @@ class KMeansClustering(Learner):
 		:param rs: The record set to assign predictions to.
 		:return: A column vector of predictions corresponding to the record set's rows.
 		"""
-		print("\tfinal number of clusters: ", self.final_number_of_clusters)
 		predictions: np.ndarray = np.zeros((rs.entries.shape[0], 1))
 		outcome_codebook = self.codebook_vectors[:, -1]
 		highest_value = np.amax(outcome_codebook)   # binary classes: highest value is 1.
