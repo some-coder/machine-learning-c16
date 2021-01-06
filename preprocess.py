@@ -221,9 +221,7 @@ if __name__ == '__main__':
 	tv, te = rec.partition(0.7, gen)  # two datasets, namely train-validate and test
 	tv_mu: np.ndarray = tv.entries.mean(axis=0).reshape((1, tv.entries.shape[1]))
 	tv_std: np.ndarray = tv.entries.std(axis=0).reshape((1, tv.entries.shape[1]))
-	print(tv.entries[:, [-1]])
 	tv.normalise(tv_mu, tv_std, True)
-	print(tv.entries[:, [-1]])
 	tv_pca = apply_pca(tv, None)  # Choose None to include all PCs. (Is not the same as not doing the PCA.)
 	te.normalise(tv_mu, tv_std, True)
 	apply_pca_indirectly(te, tv_pca)

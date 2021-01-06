@@ -8,7 +8,7 @@ class Loss:
 		"""
 		Calculates the loss metric given actual and expected predictions.
 
-		:param actual: A column vector of model predictions.
+		:param actual: A column vector of mdl predictions.
 		:param expected: A column vector of ground truth predictions.
 		:return: The loss metric given the two value sets.
 		"""

@@ -5,6 +5,13 @@ from sklearn import svm
 
 
 class SVM(Learner):
+	"""
+	The Support Vector Machine (SVM) algorithm. Given data, this class
+	projects data in a relatively high-dimensional space, allowing new
+	points to be classified linearly via a largest-margin classifier.
+	The method for sending the data in the high-dimensional space involves
+	a kernel.
+	"""
 
 	def __init__(self, **params: any):
 		"""

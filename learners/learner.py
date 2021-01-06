@@ -13,7 +13,7 @@ class Learner:
 
 		:param params: Parameter values to supply.
 		"""
-		pass
+		self.name: str = 'Base Learner'
 
 	def fit(self, rs: RecordSet) -> None:
 		"""

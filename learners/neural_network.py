@@ -1,13 +1,15 @@
 import numpy as np
-import copy as cp
-
 from learners.learner import Learner
 from preprocess import RecordSet
-from typing import Optional
 from sklearn.neural_network import MLPClassifier
 
 
 class NeuralNetwork(Learner):
+	"""
+	The neural network learning algorithm. Given data, this class
+	constructs and stores an intricate network of artificial neurons
+	that can be used to classify test data-points.
+	"""
 
 	def __init__(self, h: tuple, a: str, r: float, speed: float, stop: int, m: int, **params: any) -> None:
 		"""
@@ -26,10 +28,17 @@ class NeuralNetwork(Learner):
 		https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html
 		"""
 		super().__init__(**params)
+		self.name = 'Artificial Neural Network (multi-layer perceptron)'
 
-		self.classifier: MLPClassifier = MLPClassifier(hidden_layer_sizes=h, activation=a, alpha=r,
-													   learning_rate_init=speed, max_iter=stop, momentum=m,
-													   nesterovs_momentum=false)
+		self.classifier: MLPClassifier = \
+			MLPClassifier(
+				hidden_layer_sizes=h,
+				activation=a,
+				alpha=r,
+				learning_rate_init=speed,
+				max_iter=stop,
+				momentum=m,
+				nesterovs_momentum=False)
 
 	def fit(self, rs: RecordSet) -> None:
 		"""

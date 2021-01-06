@@ -11,10 +11,9 @@ import random as rd
 from learners.k_means_clustering import KMeansClustering
 from learners.knn import KNN
 from learners.svm import SVM
-from learners.linear_reg import Linear_Reggression
-from learners.logistic_reg import Logistic_Reggression
-from learners.probit_reg import Probit_Reggression
-from learners.decision_tree import DecisionTree
+from learners.linear_reg import LinearRegression
+from learners.logistic_reg import LogisticRegression
+from learners.probit_reg import ProbitRegression
 from learners.random_forest import RandomForest
 from learners.naive_bayes import NaiveBayes
 
@@ -185,41 +184,45 @@ if __name__ == '__main__':
 	tv, te = rec.partition(0.7, gen)  # two datasets, namely train-validate and test
 	tv_mu = tv.entries.mean(axis=0).reshape((1, tv.entries.shape[1]))
 	tv_std = tv.entries.std(axis=0).reshape((1, tv.entries.shape[1]))
-	tv.normalise(tv_mu, tv_std, True)
+	tv.normalise(tv_mu, tv_std, also_categorical=True, also_output=False)
 	tv_pca = apply_pca(tv, 2)  # keep the two most variance-accounting-for components
-	te.normalise(tv_mu, tv_std)
+	te.normalise(tv_mu, tv_std, also_categorical=True, also_output=False)
 	apply_pca_indirectly(te, tv_pca)
 
 	# print each model
-	model_list = ["SVM", "Linear_Reggression", "Logistic_Reggression", "Probit_Reggression", "KNN", "KMeansClustering", "RandomForest", "Naive_Bayes"]
+	model_list = \
+		[
+			"SVM", "LinearRegression", "LogisticRegression", "ProbitRegression", "KNN", "KMeansClustering",
+			"RandomForest", "Naive_Bayes"
+		]
 
-	for model in model_list:
+	for mdl in model_list:
 		print("\n", "*-"*40)
 
-		if model == "SVM":
+		if mdl == "SVM":
 			current_model = SVM
 			g: Grid = cast(Grid, (('C', (0.1, 0.5, 0.9, 1.0)),))
-		elif model == "Linear_Reggression":
-			current_model = Linear_Reggression
+		elif mdl == "LinearRegression":
+			current_model = LinearRegression
 			g: Grid = cast(Grid, (('alpha', (0, 0.009, 0.01)),))
-		elif model == "Logistic_Reggression":
-			current_model = Logistic_Reggression
+		elif mdl == "LogisticRegression":
+			current_model = LogisticRegression
 			g: Grid = cast(Grid, (('alpha', (0.1, 3.5, 5)),))
-		elif model == "Probit_Reggression":
-			current_model = Probit_Reggression
+		elif mdl == "ProbitRegression":
+			current_model = ProbitRegression
 			g: Grid = cast(Grid, (('alpha', (0.1, 3.5, 5)),))
-		elif model == "KNN":
+		elif mdl == "KNN":
 			current_model = KNN
 			g: Grid = cast(Grid, (('k', (1, 2, 3)),))
-		elif model == "KMeansClustering":
+		elif mdl == "KMeansClustering":
 			current_model = KMeansClustering
 			g: Grid = cast(Grid, (('k', (1, 2, 3, 4)), ))
-		elif model == "Naive_Bayes":
+		elif mdl == "Naive_Bayes":
 			current_model = NaiveBayes
 			g: Grid = cast(Grid, ())
-		elif model == "RandomForest":
+		elif mdl == "RandomForest":
 			current_model = RandomForest
-			g: Grid = cast(Grid, (('depth', (2, 5, 3)), ))	# number of trees in the forest = 100
+			g: Grid = cast(Grid, (('depth', (2, 5, 3)), ))  # number of trees in the forest = 100
 		else:
 			raise NotImplemented
 
@@ -227,7 +230,7 @@ if __name__ == '__main__':
 		ls: Tuple[Loss] = (CountLoss(),)
 
 		# select model
-		print(f"current model {model}")
+		print(f"current model {mdl}")
 		opt: Optimiser = Optimiser(rs=tv, lrn=current_model, grd=g, k=3, losses=ls)
 
 		# evaluate and show results
@@ -239,4 +242,3 @@ if __name__ == '__main__':
 		print('Top %d best configurations:' % len(bests))
 		for b in range(len(bests)):
 			print('\t%d. %s' % (b + 1, bests[b].__str__()))
-

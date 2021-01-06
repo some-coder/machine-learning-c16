@@ -118,7 +118,7 @@ naive_bayes.fit(x_train, y_train)
 
 log_reg.fit(x_train, y_train)
 
-#### evaluation of the model -------------------------------------------------------------------------------------------
+#### evaluation of the mdl -------------------------------------------------------------------------------------------
 # predict the test set, and put the result in a list
 y_predicted = []
 
@@ -131,7 +131,7 @@ y_predicted.append(naive_bayes.predict(x_test))
 
 y_predicted.append(log_reg.predict(x_test))
 
-#### evaluation of the model -------------------------------------------------------------------------------------------
+#### evaluation of the mdl -------------------------------------------------------------------------------------------
 model_names = ["svm_linear", "svm_poly", "svm_rbf", "svm_sigmoid",  "naive_bayes", "log_reg"]
 
 for i, j in enumerate(y_predicted):

@@ -7,6 +7,11 @@ from typing import Optional
 
 
 class KNN(Learner):
+	"""
+	The K-nearest neighbour learning algorithm. Given data, this class
+	stores all training data-points, and uses these to determine, based
+	on proximity, what class test data-points should belong to.
+	"""
 
 	def __init__(self, k: int, **params: any):
 		"""
@@ -16,6 +21,7 @@ class KNN(Learner):
 		:param params: Ignored.
 		"""
 		super().__init__(**params)
+		self.name = 'K-Nearest Neighbours'
 		self.k = k
 		self.data: Optional[RecordSet] = None
 
