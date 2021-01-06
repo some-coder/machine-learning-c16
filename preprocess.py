@@ -66,36 +66,54 @@ class RecordSet:
 		rb.entries = rb.entries[indices[split:], :]
 		return ra, rb
 
-	def center(self, also_categorical: bool = False) -> None:
+	def center(self, pre_calc_mu: Optional[np.ndarray] = None, also_categorical: bool = False) -> None:
 		"""
 		Centers columns around their (sample) mean value.
 
+		:param pre_calc_mu: Optional. A row vector of per-column means. If supplied, it will be used in computation.
 		:param also_categorical: Whether to also center categorical columns.
 		"""
+		idx: int = 0
 		for col in range(self.entries.shape[1]):
 			if self.types[col] == np.dtype('bool') and not also_categorical:
 				continue
-			self.entries[:, col] -= self.entries[:, col].mean()
+			if pre_calc_mu is not None:
+				self.entries[:, col] -= pre_calc_mu[0, idx]
+			else:
+				self.entries[:, col] -= self.entries[:, col].mean()
+			idx += 1
 
-	def scale(self, also_categorical: bool = False) -> None:
+	def scale(self, pre_calc_std: Optional[np.ndarray] = None, also_categorical: bool = False) -> None:
 		"""
 		Scales columns to have unit variance.
 
+		:param pre_calc_std: Optional. A row vector of per-column SDs. If supplied, it will be used in computation.
 		:param also_categorical: Whether to also scale categorical columns.
 		"""
+		idx: int = 0
 		for col in range(self.entries.shape[1]):
 			if self.types[col] == np.dtype('bool') and not also_categorical:
 				continue
-			self.entries[:, col] /= self.entries[:, col].var()
+			if pre_calc_std is not None:
+				self.entries[:, col] /= pre_calc_std[0, idx]
+			else:
+				self.entries[:, col] /= self.entries[:, col].std()
+			idx += 1
 
-	def normalise(self, also_categorical: bool = False) -> None:
+	def normalise(
+			self,
+			pre_calc_mu: Optional[np.ndarray] = None,
+			pre_calc_std: Optional[np.ndarray] = None,
+			also_categorical: bool = False) -> None:
 		"""
 		Centers and scales columns.
 
+		:param pre_calc_mu: Optional. A row vector of per-column means. If supplied, it will be used in computation.
+		:param pre_calc_std: Optional. A row vector of per-column SDs. If supplied, it will be used in computation.
 		:param also_categorical: Whether to also normalise categorical columns.
 		"""
-		self.center(also_categorical)
-		self.scale(also_categorical)
+		self.center(pre_calc_mu, also_categorical)
+		self.scale(pre_calc_std, also_categorical)
 
 
 def raw_data(location: str) -> RecordSet:
@@ -167,6 +185,8 @@ if __name__ == '__main__':
 	rec: RecordSet = raw_data('data.csv')
 	gen: rd.Random = rd.Random(123)  # for reproducibility
 	tv, te = rec.partition(0.7, gen)  # two datasets, namely train-validate and test
-	tv.normalise()
+	tv_mu: np.ndarray = tv.entries.mean(axis=0).reshape((1, tv.entries.shape[1]))
+	tv_std: np.ndarray = tv.entries.std(axis=0).reshape((1, tv.entries.shape[1]))
+	tv.normalise(tv_mu, tv_std, True)
 	tv_pca = apply_pca(tv, None)
 	visualise_pca_components(tv_pca, block=True)
