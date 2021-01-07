@@ -1,23 +1,10 @@
 import copy as cp
 import itertools as it
-import numpy as np
-from typing import Dict, List, Optional, Tuple, Type, cast
-
 from learners.learner import Learner
 from losses.loss import Loss
-from preprocess import RecordSet, raw_data, apply_pca, apply_pca_indirectly
-
-import random as rd
-from learners.k_means_clustering import KMeansClustering
-from learners.knn import KNN
-from learners.svm import SVM
-from learners.linear_reg import LinearRegression
-from learners.logistic_reg import LogisticRegression
-from learners.probit_reg import ProbitRegression
-from learners.random_forest import RandomForest
-from learners.naive_bayes import NaiveBayes
-
-from losses.count import CountLoss
+import numpy as np
+from preprocess import RecordSet
+from typing import Dict, List, Optional, Tuple, Type
 
 
 Parameter = str
@@ -179,70 +166,3 @@ class Optimiser:
 				tuple([(self.grid_parameters[i], good_config_values[i]) for i in range(len(good_config_values))])
 			best_configs.append(good_config)
 		return tuple(best_configs)
-
-
-if __name__ == '__main__':
-	# prepare the data
-	rec: RecordSet = raw_data('data.csv')
-	gen: rd.Random = rd.Random(123)  # for reproducibility
-	tv, te = rec.partition(0.7, gen)  # two datasets, namely train-validate and test
-	tv_mu = tv.entries.mean(axis=0).reshape((1, tv.entries.shape[1]))
-	tv_std = tv.entries.std(axis=0).reshape((1, tv.entries.shape[1]))
-	tv.normalise(tv_mu, tv_std, also_categorical=True, also_output=False)
-	tv_pca = apply_pca(tv, 2)  # keep the two most variance-accounting-for components
-	te.normalise(tv_mu, tv_std, also_categorical=True, also_output=False)
-	apply_pca_indirectly(te, tv_pca)
-
-	# print each model
-	model_list = \
-		[
-			"SVM", "LinearRegression", "LogisticRegression", "ProbitRegression", "KNN", "KMeansClustering",
-			"RandomForest", "Naive_Bayes"
-		]
-
-	for mdl in model_list:
-		print("\n", "*-"*40)
-
-		if mdl == "SVM":
-			current_model = SVM
-			g: Grid = cast(Grid, (('C', (0.1, 0.5, 0.9, 1.0)),))
-		elif mdl == "LinearRegression":
-			current_model = LinearRegression
-			g: Grid = cast(Grid, (('alpha', (0, 0.009, 0.01)),))
-		elif mdl == "LogisticRegression":
-			current_model = LogisticRegression
-			g: Grid = cast(Grid, (('alpha', (0.1, 3.5, 5)),))
-		elif mdl == "ProbitRegression":
-			current_model = ProbitRegression
-			g: Grid = cast(Grid, (('alpha', (0.1, 3.5, 5)),))
-		elif mdl == "KNN":
-			current_model = KNN
-			g: Grid = cast(Grid, (('k', (1, 2, 3)),))
-		elif mdl == "KMeansClustering":
-			current_model = KMeansClustering
-			g: Grid = cast(Grid, (('k', (1, 2, 3, 4)), ))
-		elif mdl == "Naive_Bayes":
-			current_model = NaiveBayes
-			g: Grid = cast(Grid, ())
-		elif mdl == "RandomForest":
-			current_model = RandomForest
-			g: Grid = cast(Grid, (('depth', (2, 5, 3)), ))  # number of trees in the forest = 100
-		else:
-			raise NotImplemented
-
-		# set params
-		ls: Tuple[Loss] = (CountLoss(),)
-
-		# select model
-		print(f"current model {mdl}")
-		opt: Optimiser = Optimiser(rs=tv, lrn=current_model, grd=g, k=3, losses=ls)
-
-		# evaluate and show results
-		print('Commencing the optimiser:')
-		opt.evaluate_all()
-		print('Evaluations of configurations, averaged over folds, per loss metric:')
-		print(opt.evs)
-		bests: Tuple[Config] = opt.best_configurations(0)
-		print('Top %d best configurations:' % len(bests))
-		for b in range(len(bests)):
-			print('\t%d. %s' % (b + 1, bests[b].__str__()))
