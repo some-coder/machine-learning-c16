@@ -51,7 +51,7 @@ venv.bak/
 .Rhistory
 *.pdf
 
-# Visualisation
+# Visualisations
 *.mp4
-
+*.gv
 .Rproj.user
