@@ -125,7 +125,12 @@ if __name__ == '__main__':
 				(LinearRegression, (('alpha', (0, 0.009, 0.01)),)),
 				(LogisticRegression, (('alpha', (0.1, 3.5, 5)),)),
 				(NaiveBayes, (('prior', (0.01, 0.5, 0.99, -1)),)),
-				# (NeuralNetwork, ())  # Winward: Set neural network grid search parameters.
+				(NeuralNetwork, (('h', ([4], [6], [8], [6, 6])),
+								 ('a', ('relu', 'tanh', 'logistic')),
+								 ('r', (0.0, 0.0001, 0.001)),
+								 ('speed', (0.01,)),
+								 ('stop', (600,)),
+								 ('m', (0.0, 0.5, 0.9)),)),
 				(ProbitRegression, (('alpha', (0.1, 3.5, 5)),)),
 				(RandomForest, (('depth', (2, 5, 3)),)),
 				(SVM, (('C', (0.1, 0.5, 0.9, 1.0)),))
