@@ -129,7 +129,7 @@ if __name__ == '__main__':
 	performances: Tuple[PerformanceMetric, ...] = \
 		(TruePositive(), TrueNegative(), FalsePositive(), FalseNegative())
 	k: int = 10
-	see_test_performance: bool = True  # Only activate once we're sure of our models!
+	see_test_performance: bool = False  # Only activate once we're sure of our models!
 
 	# learning algorithms and their parameter grids
 	model_grids: Tuple[LearnerParameters, ...] = \
