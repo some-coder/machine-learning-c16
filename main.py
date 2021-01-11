@@ -139,8 +139,8 @@ if __name__ == '__main__':
 				(LinearRegression, (('alpha', (0, 0.009, 0.01)),)),
 				(LogisticRegression, (('alpha', (0.1, 3.5, 5)),)),
 				(NaiveBayes, (('prior', (0.01, 0.5, 0.99, -1)),)),
-				(NeuralNetwork,
-					(('h', ([4], [6], [8], [6, 6])),
+				(NeuralNetwork, (
+					('h', ([4], [6], [8], [6, 6])),
 					('a', ('relu', 'tanh', 'logistic')),
 					('r', (0.0, 0.0001, 0.001)),
 					('speed', (0.01,)),
@@ -164,7 +164,7 @@ if __name__ == '__main__':
 	# compute and output testing results
 	if see_test_performance:
 		print('\nAPPLYING TO TESTING DATA')
-		out: Tuple[np.ndarray, np.ndarray] = test_outcomes(
+		test_l, test_p = test_outcomes(
 				models=tuple([mg[0] for mg in model_grids]),
 				configs=tuple(b[best_i] for best_i in range(len(model_grids))),
 				tv=train_validate,
@@ -175,6 +175,11 @@ if __name__ == '__main__':
 			)
 		print('\nRESULTS')
 		print('losses:')
-		print(out[0])
+		print(test_l)
 		print('performances')
-		print(out[1])
+		print(test_p)
+
+		print('\nWRITING... ', end='')
+		np.savetxt(fname='losses.csv', X=test_l, delimiter=',')  # type warnings are erroneous
+		np.savetxt(fname='performances.csv', X=test_p, delimiter=',')
+		print('DONE')
