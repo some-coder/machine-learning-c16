@@ -148,7 +148,7 @@ if __name__ == '__main__':
 					('m', (0.0, 0.5, 0.9)),)),
 				(ProbitRegression, (('alpha', (0.1, 3.5, 5)),)),
 				(RandomForest, (('depth', (2, 5, 3)),)),
-				(SVM, (('C', (0.1, 0.5, 0.9, 1.0)),))
+				(SVM, (('C', (0.1, 3.5, 5)),))
 			))
 
 	# find the best configurations per model
