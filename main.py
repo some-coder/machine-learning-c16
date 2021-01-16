@@ -11,6 +11,8 @@ from learners.svm import SVM
 from losses.loss import Loss
 from losses.count import CountLoss
 from optimise import Config, dict_from_tuple_of_tuples, Grid, Optimiser
+from os import mkdir
+from os.path import isfile
 from performances.performance_metric import PerformanceMetric
 from performances.true_positive import TruePositive
 from performances.true_negative import TrueNegative
@@ -70,14 +72,14 @@ def best_configurations(
 	for mod_grd in ms:
 		model, grid = mod_grd
 		if show:
-			print('Finding best configurations for ' + model.__name__ + '.')
+			print('\t\tFinding best configurations for ' + model.__name__ + '.')
 		opt: Optimiser = Optimiser(rs, model, grid, k_fold_k, lrn)
 		opt.evaluate_all()
 		bests: Tuple[Config, ...] = opt.best_configurations(loss_index=0)  # only consider first loss metric
 		if show:
-			print('Best configurations:')
+			print('\t\tBest configurations:')
 			for rank, best in enumerate(bests):
-				print('\t(' + str(rank) + ') ' + str(best))
+				print('\t\t(' + str(rank) + ') ' + str(best))
 		total.append(bests[0])
 	return tuple(total)
 
@@ -148,7 +150,9 @@ def test_outcomes(
 if __name__ == '__main__':
 	see_test_performance: bool = True  # Only activate once we're sure of our models!
 	df: Optional[pd.DataFrame] = None
+	out_dir, out_file_name = 'results', 'performances.csv'
 	for num_pca_comps in range(7, 13, 1):
+		print('PCA USES %d COMPONENTS' % (num_pca_comps,))
 		rng: Random = Random(22272566)  # For reproducibility. Different sample, better performance.
 		dat_loc: str = 'data.csv'
 		split_percent: float = 0.7
@@ -161,7 +165,11 @@ if __name__ == '__main__':
 		# learning algorithms and their parameter grids
 		model_grids: Tuple[LearnerParameters, ...] = \
 			cast(Tuple[LearnerParameters, ...], (
-				(SVM, (('alpha', ([x / 10.0 for x in range(1, 100, 10)])),)),
+				(SVM, (
+					('alpha', ([x / 10.0 for x in range(1, 100, 10)])),
+					('kernel', ('linear', 'poly', 'rbf', 'sigmoid')),
+					('shrinking', (False, True))
+				)),
 				(LinearRegression, (('alpha', (0, *[x / 100.0 for x in range(1, 10, 1)])),)),
 				(LogisticRegression, (('alpha', ([x / 10.0 for x in range(1, 100, 10)])),)),
 				(ProbitRegression, (('alpha', ([x / 10.0 for x in range(1, 100, 10)])),)),
@@ -179,18 +187,18 @@ if __name__ == '__main__':
 			))
 
 		# find the best configurations per model
-		print('FINDING OPTIMAL PARAMETERS')
+		print('\tFINDING OPTIMAL PARAMETERS')
 		train_validate, test = preprocessed_data(dat_loc, split_percent, pca_comps, rng)
 		b = best_configurations(train_validate, model_grids, k, losses, show=True)
 
 		# report train-validation configuration results
-		print('\nOPTIMAL PARAMETERS')
+		print('\n\tOPTIMAL PARAMETERS')
 		for index, model_grid in enumerate(model_grids):
-			print('\t' + model_grid[0].__name__ + ': ' + str(b[index]) + '.')
+			print('\t\t' + model_grid[0].__name__ + ': ' + str(b[index]) + '.')
 
 		# compute and output testing results
 		if see_test_performance:
-			print('\nAPPLYING TO TESTING DATA')
+			print('\n\tAPPLYING TO TESTING DATA')
 			pd_result = test_outcomes(
 				models=tuple([mg[0] for mg in model_grids]),
 				configs=tuple(b[best_i] for best_i in range(len(model_grids))),
@@ -200,17 +208,24 @@ if __name__ == '__main__':
 				pf=performances,
 				show=False
 			)
-			print(f"{num_pca_comps} done")
 			pd_result.insert(2, 'm', num_pca_comps)
 			if df is None:
 				df = pd_result
 			else:
 				df = pd.concat([df, pd_result], ignore_index=True)
 
+		# report that we're done
+		print('PCA FOR %d COMPONENTS DONE\n' % (num_pca_comps,))
+
 	if see_test_performance:
 		print('\nRESULTS')
 		df = df.sort_values('accuracy', ascending=False)
 		print(df.to_string())
 		print('\nWRITING... ', end='')
-		df.to_csv(f'result/performances.csv', index=False)
+		if not isfile(out_dir + '/' + out_file_name):  # still needs to be created
+			try:
+				mkdir(out_dir)
+			except FileExistsError:
+				raise Exception('\nFAILED: DIRECTORY ALREADY EXISTS!')
+		df.to_csv(out_dir + '/' + out_file_name, index=False)
 		print('DONE')
