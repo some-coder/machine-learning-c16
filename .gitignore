@@ -56,7 +56,6 @@ venv.bak/
 *.gv
 .Rproj.user
 
-# Output CSVs
-losses.csv
-performances.csv
 
+# Output files
+result/performances.csv
