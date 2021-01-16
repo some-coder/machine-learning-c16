@@ -20,7 +20,11 @@ class SVM(Learner):
 		:param params: The parameters to supply to the support vector machine; see sklearn.svm.SVC for details.
 		"""
 		super().__init__(**params)
-		self.classifier: svm.SVC = svm.SVC(**params)
+		self.alpha = params["alpha"]
+		if self.alpha == 0:
+			raise Exception("Alpha for SVM too low to obtain reliable results")
+
+		self.classifier: svm.SVC = svm.SVC(C=1/self.alpha)
 
 	def fit(self, rs: RecordSet) -> None:
 		"""

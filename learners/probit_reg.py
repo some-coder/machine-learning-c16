@@ -51,7 +51,7 @@ class ProbitRegression(Learner):
 
 		# avoid error
 		if self.alpha == 0:
-			raise Exception("Alpha too low to obtain reliable results")
+			raise Exception("Alpha Probit too low to obtain reliable results")
 
 		self.model = Probit(endog=out.ravel(), exog=patterns)
 		self.model = self.model.fit_regularized(alpha=self.alpha, maxiter=10e5, disp=False)

@@ -45,7 +45,7 @@ class LogisticRegression(Learner):
 
 		# avoid error
 		if self.alpha == 0:
-			raise Exception("Alpha too low to obtain reliable results")
+			raise Exception("Alpha Logistic too low to obtain reliable results")
 
 		# import the logistic regression
 		self.model = LogReg(C=1/self.alpha, penalty="l1", solver="liblinear")
