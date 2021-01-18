@@ -47,7 +47,7 @@ class LinearRegression(Learner):
 
 		# compute covariance matrix
 		identity_matrix = np.identity(patterns.shape[1], dtype=float)
-		regularisation = self.alpha * identity_matrix
+		regularisation = self.alpha**2 * identity_matrix
 		covariance_matrix = np.linalg.inv(np.dot(patterns.T, patterns)) + regularisation
 
 		# compute result

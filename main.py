@@ -6,6 +6,7 @@ from learners.logistic_reg import LogisticRegression
 from learners.naive_bayes import NaiveBayes
 from learners.neural_network import NeuralNetwork
 from learners.probit_reg import ProbitRegression
+from learners.poisson_reg import PoissonRegression
 from learners.random_forest import RandomForest
 from learners.svm import SVM
 from losses.loss import Loss
@@ -66,7 +67,7 @@ def best_configurations(
 	:param k_fold_k: The number of folds to use. Minimally 1. Maximally the number of data-points (LOO-KCV).
 	:param lrn: The loss metrics to employ. Use at least 1. Only the first loss metric is considered.
 	:param show: Whether to show details at standard output. Defaults to no.
-	:return: A dictionary mapping models to configurations, decreasing in successfulness.
+	:return: dictionary mapping models to configurations, decreasing in successfulness.
 	"""
 	total: Dict[Type[Learner], Tuple[Config, ...]] = {}
 	for mod_grd in ms:
@@ -122,6 +123,7 @@ def test_outcomes(
 
 	# add model names and put in pandas dataframe
 	pd_loss: pd.DataFrame = pd.DataFrame(data=model_name_list)
+	pd_loss.columns = ["model_name"]
 	pd_loss["config"] = model_config_list
 	pd_loss["loss"] = test_losses.transpose()
 	pd_performances = pd.DataFrame(data=test_performances)
@@ -151,74 +153,85 @@ if __name__ == '__main__':
 	see_test_performance: bool = True  # Only activate once we're sure of our models!
 	df: Optional[pd.DataFrame] = None
 	out_dir, out_file_name = 'results', 'performances.csv'
-	for num_pca_comps in range(7, 13, 1):
-		print('PCA USES %d COMPONENTS' % (num_pca_comps,))
-		rng: Random = Random(22272566)  # For reproducibility. Different sample, better performance.
-		dat_loc: str = 'data.csv'
-		split_percent: float = 0.7
-		pca_comps: int = num_pca_comps
-		losses: Tuple[Loss, ...] = (CountLoss(),)
-		performances: Tuple[PerformanceMetric, ...] = \
-			(TruePositive(), TrueNegative(), FalsePositive(), FalseNegative())
-		k: int = 10
+	rng_grand: Random = Random(123456)
+	replications: int = 100
 
-		# learning algorithms and their parameter grids
-		model_grids: Tuple[LearnerParameters, ...] = \
-			cast(Tuple[LearnerParameters, ...], (
-				(SVM, (
-					('alpha', ([x / 10.0 for x in range(1, 100, 10)])),
-					('kernel', ('linear', 'poly', 'rbf', 'sigmoid')),
-					('shrinking', (False, True))
-				)),
-				(LinearRegression, (('alpha', (0, *[x / 100.0 for x in range(1, 10, 1)])),)),
-				(LogisticRegression, (('alpha', ([x / 10.0 for x in range(1, 100, 10)])),)),
-				(ProbitRegression, (('alpha', ([x / 10.0 for x in range(1, 100, 10)])),)),
-				(KMeansClustering, (('k', (range(1, 5, 1))),)),
-				(KNN, (('k', (range(1, 5, 1))),)),
-				(RandomForest, (('depth', (range(1, 5, 1))),)),
-				(NaiveBayes, (('prior', (0.5, 0.99, -1)),))  # ,
-				# (NeuralNetwork, (
-				# 	('h', ([4], [6], [8], [6, 6])),
-				# 	('a', ('relu', 'tanh', 'logistic')),
-				# 	('r', (0.0, 0.0001, 0.001)),
-				# 	('speed', (0.01,)),
-				# 	('stop', (600,)),
-				# 	('m', (0.0, 0.5, 0.9)),))
-			))
+	# loop S replications
+	for replication in range(1, (replications + 1), 1):
+		seed = rng_grand.randint(1, replication * 100)
+		print(f'ITERATION {replication}')
 
-		# find the best configurations per model
-		print('\tFINDING OPTIMAL PARAMETERS')
-		train_validate, test = preprocessed_data(dat_loc, split_percent, pca_comps, rng)
-		b = best_configurations(train_validate, model_grids, k, losses, show=True)
+		for num_pca_comps in range(8, 13, 1):
+			print('PCA USES %d COMPONENTS' % (num_pca_comps,))
+			#rng: Random = Random(22272566)  # For reproducibility. Different sample, better performance.
+			rng: Random = Random(seed)  # For reproducibility. Different sample, better performance.
+			dat_loc: str = 'data.csv'
+			split_percent: float = 0.7
+			pca_comps: int = num_pca_comps
+			losses: Tuple[Loss, ...] = (CountLoss(),)
+			performances: Tuple[PerformanceMetric, ...] = \
+				(TruePositive(), TrueNegative(), FalsePositive(), FalseNegative())
+			k: int = 10
 
-		# report train-validation configuration results
-		print('\n\tOPTIMAL PARAMETERS')
-		for index, model_grid in enumerate(model_grids):
-			print('\t\t' + model_grid[0].__name__ + ': ' + str(b[model_grid[0]][0]) + '.')
+			# learning algorithms and their parameter grids
+			model_grids: Tuple[LearnerParameters, ...] = \
+				cast(Tuple[LearnerParameters, ...], (
+					(SVM, (
+						('alpha', ([x / 10.0 for x in range(12, 16, 1)])),
+						('kernel', ('linear', 'poly', 'rbf', 'sigmoid')),
+						('shrinking', (False, True))
+					)),
+					(LinearRegression, (('alpha', (0.001, 0.005, *[x / 1000.0 for x in range(0, 40, 10)])),)),
+					(LogisticRegression, (('alpha', ([x / 10.0 for x in range(1, 20, 1)])),)),
+					(ProbitRegression, (('alpha', ([x / 10.0 for x in range(28, 39, 1)])),)),
+					(PoissonRegression, (('alpha', ([x / 10.0 for x in range(8, 17, 1)])),)),
+					(KMeansClustering, (('k', (range(2, 5, 1))),)),
+					(KNN, (('k', (range(2, 5, 1))),)),
+					(RandomForest, (('depth', (range(2, 5, 1))),)),
+					(NaiveBayes, (('prior', (*[x / 100.0 for x in range(45, 56, 1)], -1)),))  # ,
+					# (NeuralNetwork, (
+					# 	('h', ([4], [6], [8], [6, 6])),
+					# 	('a', ('relu', 'tanh', 'logistic')),
+					# 	('r', (0.0, 0.0001, 0.001)),
+					# 	('speed', (0.01,)),
+					# 	('stop', (600,)),
+					# 	('m', (0.0, 0.5, 0.9)),))
+				))
 
-		# compute and output testing results
-		if see_test_performance:
-			print('\n\tAPPLYING TO TESTING DATA')
-			pd_result = test_outcomes(
-				models=tuple([mg[0] for mg in model_grids]),
-				configs=tuple(b[mg[0]][0] for mg in model_grids),
-				tv=train_validate,
-				te=test,
-				ls=losses,
-				pf=performances,
-				show=False
-			)
-			pd_result.insert(2, 'm', num_pca_comps)
-			if df is None:
-				df = pd_result
-			else:
-				df = pd.concat([df, pd_result], ignore_index=True)
+			# find the best configurations per model
+			print('\tFINDING OPTIMAL PARAMETERS')
+			train_validate, test = preprocessed_data(dat_loc, split_percent, pca_comps, rng)
+			b = best_configurations(train_validate, model_grids, k, losses, show=True)
 
-		# report that we're done
-		print('PCA FOR %d COMPONENTS DONE\n' % (num_pca_comps,))
+			# report train-validation configuration results
+			print('\n\tOPTIMAL PARAMETERS')
+			for index, model_grid in enumerate(model_grids):
+				for index_j, configuration in enumerate(b[model_grid[0]]):
+					print('\t\t' + model_grid[0].__name__ + ': ' + str(configuration) + '.')
+
+					# compute and output testing results
+					if see_test_performance:
+						pd_result = test_outcomes(
+							models=tuple([model_grid[0]]),
+							configs=tuple([configuration]),
+							tv=train_validate,
+							te=test,
+							ls=losses,
+							pf=performances,
+							show=False
+						)
+						pd_result.insert(2, 'm', num_pca_comps)
+						if df is None:
+							df = pd_result
+						else:
+							df = pd.concat([df, pd_result], ignore_index=True)
+
+			# report that we're done
+			print('PCA FOR %d COMPONENTS DONE\n' % (num_pca_comps,))
 
 	if see_test_performance:
 		print('\nRESULTS')
+		df = df.groupby(["model_name", "config", "m"]).mean()
 		df = df.sort_values('accuracy', ascending=False)
 		print(df.to_string())
 		print('\nWRITING... ', end='')
@@ -227,5 +240,5 @@ if __name__ == '__main__':
 				mkdir(out_dir)
 			except FileExistsError:
 				raise Exception('\nFAILED: DIRECTORY ALREADY EXISTS!')
-		df.to_csv(out_dir + '/' + out_file_name, index=False)
+		df.to_csv(out_dir + '/' + out_file_name, index=True)
 		print('DONE')

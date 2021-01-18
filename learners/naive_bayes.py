@@ -3,7 +3,7 @@ import copy as cp
 from learners.learner import Learner
 from preprocess import RecordSet
 from typing import Optional
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB, BernoulliNB
 
 
 class NaiveBayes(Learner):
@@ -39,8 +39,10 @@ class NaiveBayes(Learner):
 		y = np.ravel(self.data.entries[:, -1:])
 		if self.prior != -1:
 			bayes_classifier = GaussianNB(priors=[self.prior, 1 - self.prior])
+			#bayes_classifier = BernoulliNB(class_prior=[self.prior, 1 - self.prior])
 		else:
 			bayes_classifier = GaussianNB()
+			#bayes_classifier = BernoulliNB()
 		bayes_classifier.fit(x, y)
 		self.bayes_model = bayes_classifier
 
