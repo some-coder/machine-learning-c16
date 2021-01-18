@@ -57,7 +57,7 @@ def best_configurations(
 		ms: Tuple[LearnerParameters, ...],
 		k_fold_k: int,
 		lrn: Tuple[Loss, ...],
-		show: bool = False) -> Tuple[Config, ...]:
+		show: bool = False) -> Dict[Type[Learner], Tuple[Config, ...]]:
 	"""
 	Yields, for each model, the best configuration of its parameter grid.
 
@@ -66,9 +66,9 @@ def best_configurations(
 	:param k_fold_k: The number of folds to use. Minimally 1. Maximally the number of data-points (LOO-KCV).
 	:param lrn: The loss metrics to employ. Use at least 1. Only the first loss metric is considered.
 	:param show: Whether to show details at standard output. Defaults to no.
-	:return: A tuple of, per model, the single best configuration.
+	:return: A dictionary mapping models to configurations, decreasing in successfulness.
 	"""
-	total: List[Config] = []
+	total: Dict[Type[Learner], Tuple[Config, ...]] = {}
 	for mod_grd in ms:
 		model, grid = mod_grd
 		if show:
@@ -80,8 +80,8 @@ def best_configurations(
 			print('\t\tBest configurations:')
 			for rank, best in enumerate(bests):
 				print('\t\t(' + str(rank) + ') ' + str(best))
-		total.append(bests[0])
-	return tuple(total)
+		total[model] = bests
+	return total
 
 
 def test_outcomes(
@@ -194,14 +194,14 @@ if __name__ == '__main__':
 		# report train-validation configuration results
 		print('\n\tOPTIMAL PARAMETERS')
 		for index, model_grid in enumerate(model_grids):
-			print('\t\t' + model_grid[0].__name__ + ': ' + str(b[index]) + '.')
+			print('\t\t' + model_grid[0].__name__ + ': ' + str(b[model_grid[0]][0]) + '.')
 
 		# compute and output testing results
 		if see_test_performance:
 			print('\n\tAPPLYING TO TESTING DATA')
 			pd_result = test_outcomes(
 				models=tuple([mg[0] for mg in model_grids]),
-				configs=tuple(b[best_i] for best_i in range(len(model_grids))),
+				configs=tuple(b[mg[0]][0] for mg in model_grids),
 				tv=train_validate,
 				te=test,
 				ls=losses,
