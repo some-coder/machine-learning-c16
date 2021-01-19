@@ -24,7 +24,9 @@ from random import Random, randint
 from typing import cast, Dict, List, Optional, Tuple, Type
 import numpy as np
 import pandas as pd
-
+import sys
+import os
+import warnings
 
 LearnerParameters = Tuple[Type[Learner], Grid]
 
@@ -150,18 +152,24 @@ def test_outcomes(
 
 
 if __name__ == '__main__':
+	# suppress all warnings
+	if not sys.warnoptions:
+		warnings.simplefilter("ignore")
+		os.environ["PYTHONWARNINGS"] = "ignore"
+
+	# set paramaters
 	see_test_performance: bool = True  # Only activate once we're sure of our models!
 	df: Optional[pd.DataFrame] = None
-	out_dir, out_file_name = 'results', 'performances.csv'
+	out_dir, out_file_name = 'results', 'performances_MLP.csv'
 	rng_grand: Random = Random(123456)
-	replications: int = 100
+	replications: int = 2
 
 	# loop S replications
 	for replication in range(1, (replications + 1), 1):
 		seed = rng_grand.randint(1, replication * 100)
 		print(f'ITERATION {replication}')
 
-		for num_pca_comps in range(8, 13, 1):
+		for num_pca_comps in range(12, 13, 1):
 			print('PCA USES %d COMPONENTS' % (num_pca_comps,))
 			#rng: Random = Random(22272566)  # For reproducibility. Different sample, better performance.
 			rng: Random = Random(seed)  # For reproducibility. Different sample, better performance.
@@ -176,26 +184,26 @@ if __name__ == '__main__':
 			# learning algorithms and their parameter grids
 			model_grids: Tuple[LearnerParameters, ...] = \
 				cast(Tuple[LearnerParameters, ...], (
-					(SVM, (
-						('alpha', ([x / 10.0 for x in range(12, 16, 1)])),
-						('kernel', ('linear', 'poly', 'rbf', 'sigmoid')),
-						('shrinking', (False, True))
-					)),
-					(LinearRegression, (('alpha', (0.001, 0.005, *[x / 1000.0 for x in range(0, 40, 10)])),)),
-					(LogisticRegression, (('alpha', ([x / 10.0 for x in range(1, 20, 1)])),)),
-					(ProbitRegression, (('alpha', ([x / 10.0 for x in range(28, 39, 1)])),)),
-					(PoissonRegression, (('alpha', ([x / 10.0 for x in range(8, 17, 1)])),)),
-					(KMeansClustering, (('k', (range(2, 5, 1))),)),
-					(KNN, (('k', (range(2, 5, 1))),)),
-					(RandomForest, (('depth', (range(2, 5, 1))),)),
-					(NaiveBayes, (('prior', (*[x / 100.0 for x in range(45, 56, 1)], -1)),))  # ,
-					# (NeuralNetwork, (
-					# 	('h', ([4], [6], [8], [6, 6])),
-					# 	('a', ('relu', 'tanh', 'logistic')),
-					# 	('r', (0.0, 0.0001, 0.001)),
-					# 	('speed', (0.01,)),
-					# 	('stop', (600,)),
-					# 	('m', (0.0, 0.5, 0.9)),))
+					#(SVM, (
+					#	('alpha', ([x / 10.0 for x in range(12, 16, 1)])),
+					#	('kernel', ('linear', 'poly', 'rbf', 'sigmoid')),
+					#	('shrinking', (False, True))
+					#)),
+					#(LinearRegression, (('alpha', (0.001, 0.005, *[x / 1000.0 for x in range(0, 40, 10)])),)),
+					#(LogisticRegression, (('alpha', ([x / 10.0 for x in range(1, 20, 1)])),)),
+					#(ProbitRegression, (('alpha', ([x / 10.0 for x in range(28, 39, 1)])),))#,
+					#(PoissonRegression, (('alpha', ([x / 10.0 for x in range(8, 17, 1)])),)),
+					#(KMeansClustering, (('k', (range(2, 5, 1))),)),
+					#(KNN, (('k', (range(2, 5, 1))),)),
+					#(RandomForest, (('depth', (range(2, 5, 1))),)),
+					#(NaiveBayes, (('prior', (*[x / 100.0 for x in range(45, 56, 1)], -1)),)),
+					[(NeuralNetwork, (
+					 	('h', ([4], [6], [8], [6, 6])),
+					 	('a', ('relu', 'tanh', 'logistic')),
+					 	('alpha', (0.0, 0.0001, 0.001)),
+					 	('speed', (0.01,)),
+					 	('stop', (600,)),
+					 	('m', (0.8, 0.9)),))]
 				))
 
 			# find the best configurations per model
@@ -220,7 +228,8 @@ if __name__ == '__main__':
 							pf=performances,
 							show=False
 						)
-						pd_result.insert(2, 'm', num_pca_comps)
+						pd_result.insert(2, 'iteration', replication)
+						pd_result.insert(3, 'm', num_pca_comps)
 						if df is None:
 							df = pd_result
 						else:
@@ -230,10 +239,16 @@ if __name__ == '__main__':
 			print('PCA FOR %d COMPONENTS DONE\n' % (num_pca_comps,))
 
 	if see_test_performance:
+		save_mean = True
 		print('\nRESULTS')
-		df = df.groupby(["model_name", "config", "m"]).mean()
+
+		if save_mean:
+			df = df.drop(columns=['iteration'])
+			df = df.groupby(["model_name", "config", "m"]).mean()
+
 		df = df.sort_values('accuracy', ascending=False)
 		print(df.to_string())
+
 		print('\nWRITING... ', end='')
 		if not isfile(out_dir + '/' + out_file_name):  # still needs to be created
 			try:

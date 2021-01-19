@@ -3,7 +3,6 @@ from learners.learner import Learner
 from preprocess import RecordSet
 from sklearn.neural_network import MLPClassifier
 
-
 class NeuralNetwork(Learner):
 	"""
 	The neural network learning algorithm. Given data, this class
@@ -11,13 +10,13 @@ class NeuralNetwork(Learner):
 	that can be used to classify test data-points.
 	"""
 
-	def __init__(self, h: tuple, a: str, r: float, speed: float, stop: int, m: int, **params: any) -> None:
+	def __init__(self, h: tuple, a: str, alpha: float, speed: float, stop: int, m: int, **params: any) -> None:
 		"""
 		Initialises the neural network algorithm (multilayer perceptron, fully connected).
 
 		:param list h: List with size of the hidden layers. List length and size must be at least 1.
 		:param a: Activation function to be used. Options are: "identity", "relu", "tanh", "logistic".
-		:param r: L2 regularization term. Default value in sklearn is 0.0001.
+		:param alpha: L2 regularization term. Default value in sklearn is 0.0001.
 		:param speed: Learning rate. Default value in sklearn is 0.001.
 		:param stop: Maximum number of iterations. Default value in sklearn is 200.
 		:param m: Momentum for the (s)gd update. Must be between 0 and 1.0. Default value in sklearn is 0.9.
@@ -34,7 +33,7 @@ class NeuralNetwork(Learner):
 			MLPClassifier(
 				hidden_layer_sizes=h,
 				activation=a,
-				alpha=r,
+				alpha=alpha,
 				learning_rate_init=speed,
 				max_iter=stop,
 				momentum=m,
