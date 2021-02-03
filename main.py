@@ -160,16 +160,16 @@ if __name__ == '__main__':
 	# set paramaters
 	see_test_performance: bool = True  # Only activate once we're sure of our models!
 	df: Optional[pd.DataFrame] = None
-	out_dir, out_file_name = 'results', 'performances_MLP.csv'
+	out_dir, out_file_name = 'results', 'all_best_models.csv'
 	rng_grand: Random = Random(123456)
-	replications: int = 2
+	replications: int = 100
 
 	# loop S replications
 	for replication in range(1, (replications + 1), 1):
 		seed = rng_grand.randint(1, replication * 100)
 		print(f'ITERATION {replication}')
 
-		for num_pca_comps in range(12, 13, 1):
+		for num_pca_comps in range(7, 13, 1):
 			print('PCA USES %d COMPONENTS' % (num_pca_comps,))
 			#rng: Random = Random(22272566)  # For reproducibility. Different sample, better performance.
 			rng: Random = Random(seed)  # For reproducibility. Different sample, better performance.
@@ -184,26 +184,26 @@ if __name__ == '__main__':
 			# learning algorithms and their parameter grids
 			model_grids: Tuple[LearnerParameters, ...] = \
 				cast(Tuple[LearnerParameters, ...], (
-					#(SVM, (
-					#	('alpha', ([x / 10.0 for x in range(12, 16, 1)])),
-					#	('kernel', ('linear', 'poly', 'rbf', 'sigmoid')),
-					#	('shrinking', (False, True))
-					#)),
-					#(LinearRegression, (('alpha', (0.001, 0.005, *[x / 1000.0 for x in range(0, 40, 10)])),)),
-					#(LogisticRegression, (('alpha', ([x / 10.0 for x in range(1, 20, 1)])),)),
-					#(ProbitRegression, (('alpha', ([x / 10.0 for x in range(28, 39, 1)])),))#,
-					#(PoissonRegression, (('alpha', ([x / 10.0 for x in range(8, 17, 1)])),)),
-					#(KMeansClustering, (('k', (range(2, 5, 1))),)),
-					#(KNN, (('k', (range(2, 5, 1))),)),
-					#(RandomForest, (('depth', (range(2, 5, 1))),)),
-					#(NaiveBayes, (('prior', (*[x / 100.0 for x in range(45, 56, 1)], -1)),)),
-					[(NeuralNetwork, (
-					 	('h', ([4], [6], [8], [6, 6])),
-					 	('a', ('relu', 'tanh', 'logistic')),
-					 	('alpha', (0.0, 0.0001, 0.001)),
+					(SVM, (
+						('alpha', ([1.5])),
+						('kernel', (['linear'])),
+						('shrinking', ([False]))
+					)),
+					(LinearRegression, (('alpha', ([0.99])),)),
+					(LogisticRegression, (('alpha', ([1.5])),)),
+					(ProbitRegression, (('alpha', ([3.2])),)),
+					(PoissonRegression, (('alpha', ([x / 10.0 for x in range(8, 17, 1)])),)),
+					(KMeansClustering, (('k', ([2])),)),
+					(KNN, (('k', ([4])),))#,
+					(RandomForest, (('depth', ([4])),))#,
+					(NaiveBayes, (('prior', ([0.48])),)),
+					(NeuralNetwork, (
+					 	('h', ([[8]])),
+					 	('a', (['logistic'])),
+					 	('alpha', ([0.0])),
 					 	('speed', (0.01,)),
 					 	('stop', (600,)),
-					 	('m', (0.8, 0.9)),))]
+					 	('m', ([0.9])),))
 				))
 
 			# find the best configurations per model
@@ -250,10 +250,10 @@ if __name__ == '__main__':
 		print(df.to_string())
 
 		print('\nWRITING... ', end='')
-		if not isfile(out_dir + '/' + out_file_name):  # still needs to be created
-			try:
-				mkdir(out_dir)
-			except FileExistsError:
-				raise Exception('\nFAILED: DIRECTORY ALREADY EXISTS!')
+		#if not isfile(out_dir + '/' + out_file_name):  # still needs to be created
+		#	try:
+		#		mkdir(out_dir)
+		#	except FileExistsError:
+		#		raise Exception('\nFAILED: DIRECTORY ALREADY EXISTS!')
 		df.to_csv(out_dir + '/' + out_file_name, index=True)
 		print('DONE')
